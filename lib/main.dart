@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:myapp/firebase_options.dart';
-import 'package:myapp/screens/auth/auth_screen.dart';
 import 'package:myapp/screens/home/home_screen.dart';
+import 'package:myapp/screens/auth_screen.dart';
 
 // Ensure you have initialized Firebase before running the app
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -49,24 +47,26 @@ class StartScreen extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           // Show a loading indicator while checking auth state
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
         if (snapshot.hasData) {
           // User is signed in
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacementNamed('/home'); // Navigate to home screen
+            Navigator.of(
+              context,
+            ).pushReplacementNamed('/home'); // Navigate to home screen
           });
           // Return an empty container while navigating
           return Container();
         } else {
           // User is not signed in
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacementNamed('/auth'); // Navigate to auth screen
+            Navigator.of(
+              context,
+            ).pushReplacementNamed('/auth'); // Navigate to auth screen
           });
-           // Return an empty container while navigating
+          // Return an empty container while navigating
           return Container();
         }
       },

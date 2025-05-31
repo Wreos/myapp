@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:myapp/screens/auth/auth_screen.dart';
+import 'package:myapp/screens/auth_screen.dart';
 import 'package:myapp/screens/home_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -13,9 +13,7 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         } else if (snapshot.hasData) {
           return const HomeScreen();
