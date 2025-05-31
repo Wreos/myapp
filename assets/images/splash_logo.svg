@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Circle -->
+  <circle cx="256" cy="256" r="248" stroke="#2196F3" stroke-width="16" stroke-dasharray="30 15"/>
+  
+  <!-- Inner Circle -->
+  <circle cx="256" cy="256" r="200" fill="#2196F3" fill-opacity="0.1"/>
+  
+  <!-- Arrow Up -->
+  <path d="M256 96L376 216H136L256 96Z" fill="#2196F3"/>
+  
+  <!-- Person Silhouette -->
+  <path d="M256 156C300.18 156 336 191.82 336 236C336 280.18 300.18 316 256 316C211.82 316 176 280.18 176 236C176 191.82 211.82 156 256 156ZM256 396C376.4 396 476 445.8 476 506V536H36V506C36 445.8 135.6 396 256 396Z" fill="#2196F3"/>
+  
+  <!-- Animated Dots -->
+  <circle cx="256" cy="48" r="8" fill="#2196F3">
+    <animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="464" cy="256" r="8" fill="#2196F3">
+    <animate attributeName="opacity" values="1;0.2;1" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="256" cy="464" r="8" fill="#2196F3">
+    <animate attributeName="opacity" values="1;0.2;1" dur="2s" begin="1s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="48" cy="256" r="8" fill="#2196F3">
+    <animate attributeName="opacity" values="1;0.2;1" dur="2s" begin="1.5s" repeatCount="indefinite"/>
+  </circle>
+</svg> 

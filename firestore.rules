@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // User profiles
+    match /users/{userId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow write: if isSignedIn() && isOwner(userId);
+      
+      // Career goals subcollection
+      match /goals/{goalId} {
+        allow read: if isSignedIn() && isOwner(userId);
+        allow write: if isSignedIn() && isOwner(userId);
+      }
+      
+      // Chat history subcollection
+      match /chats/{chatId} {
+        allow read: if isSignedIn() && isOwner(userId);
+        allow create: if isSignedIn() && isOwner(userId);
+        allow update: if isSignedIn() && isOwner(userId);
+        allow delete: if isSignedIn() && isOwner(userId);
+        
+        // Messages subcollection
+        match /messages/{messageId} {
+          allow read: if isSignedIn() && isOwner(userId);
+          allow create: if isSignedIn() && isOwner(userId);
+          allow update: if false; // Messages cannot be edited
+          allow delete: if isSignedIn() && isOwner(userId);
+        }
+      }
+      
+      // CV/Resume data subcollection
+      match /resumes/{resumeId} {
+        allow read: if isSignedIn() && isOwner(userId);
+        allow write: if isSignedIn() && isOwner(userId);
+        
+        // Feedback subcollection
+        match /feedback/{feedbackId} {
+          allow read: if isSignedIn() && isOwner(userId);
+          allow create: if isSignedIn() && isOwner(userId);
+          allow update: if false; // Feedback cannot be edited
+          allow delete: if isSignedIn() && isOwner(userId);
+        }
+      }
+    }
+  }
+} 

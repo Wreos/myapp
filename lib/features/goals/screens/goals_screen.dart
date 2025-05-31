@@ -1,0 +1,132 @@
+import 'package:flutter/material.dart';
+import 'package:next_you/constants/sizes.dart';
+
+class GoalsScreen extends StatelessWidget {
+  const GoalsScreen({super.key});
+
+  Widget _buildGoalCard({
+    required String title,
+    required String description,
+    required double progress,
+    required String deadline,
+    VoidCallback? onTap,
+  }) {
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.only(bottom: Sizes.paddingM),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Sizes.radiusM),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Sizes.radiusM),
+        child: Padding(
+          padding: EdgeInsets.all(Sizes.paddingL),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    deadline,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                ],
+              ),
+              SizedBox(height: Sizes.paddingS),
+              Text(
+                description,
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+              SizedBox(height: Sizes.paddingM),
+              Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(Sizes.radiusS),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 8,
+                        backgroundColor: Colors.grey[200],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: Sizes.paddingM),
+                  Text(
+                    '${(progress * 100).round()}%',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Career Goals'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              // TODO: Implement add goal
+            },
+          ),
+        ],
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.all(Sizes.paddingL),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildGoalCard(
+                  title: 'Learn Flutter Development',
+                  description:
+                      'Complete advanced Flutter course and build 3 portfolio projects',
+                  progress: 0.7,
+                  deadline: 'Mar 2024',
+                ),
+                _buildGoalCard(
+                  title: 'Get AWS Certification',
+                  description:
+                      'Study and pass the AWS Solutions Architect exam',
+                  progress: 0.3,
+                  deadline: 'Jun 2024',
+                ),
+                _buildGoalCard(
+                  title: 'Improve Leadership Skills',
+                  description:
+                      'Lead a team project and mentor junior developers',
+                  progress: 0.5,
+                  deadline: 'Dec 2024',
+                ),
+              ]),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // TODO: Implement AI goal suggestions
+        },
+        icon: const Icon(Icons.psychology),
+        label: const Text('AI Suggestions'),
+      ),
+    );
+  }
+}

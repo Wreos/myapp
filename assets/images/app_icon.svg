@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="#2196F3"/>
+  
+  <!-- Main Circle -->
+  <circle cx="512" cy="512" r="320" fill="white" fill-opacity="0.95"/>
+  
+  <!-- Arrow Up -->
+  <path d="M512 292L672 452H352L512 292Z" fill="#2196F3"/>
+  
+  <!-- Person Silhouette -->
+  <path d="M512 392C556.18 392 592 427.82 592 472C592 516.18 556.18 552 512 552C467.82 552 432 516.18 432 472C432 427.82 467.82 392 512 392ZM512 632C632.4 632 732 681.8 732 742V772H292V742C292 681.8 391.6 632 512 632Z" fill="#2196F3"/>
+</svg> 

@@ -1,5 +1,5 @@
-name: myapp
-description: "A new Flutter project."
+name: next_you
+description: "NextU - Your AI Career Coach"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.8.0-278.1.beta
+  sdk: '>=3.2.3 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -33,12 +33,29 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-  firebase_core: ^3.1.0
-  firebase_auth: ^5.1.2
+  cupertino_icons: ^1.0.6
+  firebase_core: ^3.13.1
+  firebase_auth: ^5.5.4
+  cloud_firestore: ^5.6.8
+  firebase_ai: ^2.0.0
   google_sign_in: ^6.2.1
-  sign_in_with_apple: ^6.1.1
+  sign_in_with_apple: ^7.0.0
+  google_fonts: ^6.1.0
   crypto: ^3.0.3
+  path: ^1.8.3
+  intl: ^0.20.2
+  flutter_riverpod: ^2.4.10
+  riverpod_annotation: ^2.3.3
+  js: ^0.7.2
+  image_picker: ^1.0.7
+  flutter_markdown: ^0.7.7+1
+  shared_preferences: ^2.2.2
+  uuid: ^4.3.3
+  url_launcher: ^6.2.5
+  file_picker: ^10.1.0
+  syncfusion_flutter_pdf: ^29.2.7+1
+  flutter_svg: ^2.1.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
@@ -49,7 +66,11 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.9
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.3.10
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -61,6 +82,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -92,3 +117,27 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#FFFFFF"
+    theme_color: "#2196F3"
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#1a1a1a"
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#1a1a1a"
+    icon_background_color: "#FFFFFF"
+    icon_background_color_dark: "#1a1a1a"
+  web: true
+  fullscreen: true
