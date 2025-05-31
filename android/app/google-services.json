@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "846219115187",
+    "project_id": "nextu-career-coach",
+    "storage_bucket": "nextu-career-coach.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846219115187:android:edec300b76ff5e99ee8ec6",
+        "android_client_info": {
+          "package_name": "com.nextu.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAt6I85MLmuh-iRuKZv5RbgKz2_6CbJ8AQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
