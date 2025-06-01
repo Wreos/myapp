@@ -208,7 +208,7 @@ class _AuthScreenState extends State<AuthScreen>
                                       size: Sizes.iconL,
                                     ),
                                     SizedBox(width: Sizes.paddingM),
-                                    const Text(
+                                    Text(
                                       'Continue with Apple',
                                       style: TextStyle(
                                         fontSize: Sizes.fontM,

@@ -19,6 +19,7 @@ class AppTheme {
         fontWeight: FontWeight.w600,
         color: Colors.black87,
       ),
+      toolbarHeight: kToolbarHeight + 16,
     ),
     cardTheme: CardThemeData(
       elevation: 0,
@@ -67,6 +68,7 @@ class AppTheme {
         fontWeight: FontWeight.w600,
         color: Colors.white,
       ),
+      toolbarHeight: kToolbarHeight + 16,
     ),
     cardTheme: CardThemeData(
       elevation: 0,

@@ -1,25 +1,76 @@
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
 
 final aiServiceProvider = Provider<AIService>((ref) => AIService());
 
 class AIService {
   static final AIService _instance = AIService._internal();
   late final GenerativeModel _model;
-  late final ChatSession _chat;
+  late ChatSession _chat;
+  String? _cvContext;
 
   factory AIService() {
     return _instance;
   }
 
+  void setCVContext(String cvContent) {
+    _cvContext = cvContent;
+    // Restart chat session with CV context
+    _chat = _model.startChat(history: [
+      Content.text('''
+You are a concise and focused AI career coach. Follow these guidelines:
+1. Keep responses short and actionable (2-3 paragraphs max)
+2. Focus on practical, specific advice
+3. Use bullet points for lists
+4. Avoid generic advice and corporate jargon
+5. When suggesting resources or next steps, limit to top 3 most relevant
+6. If you need more context, ask a specific follow-up question
+
+${_cvContext != null ? '''
+Context from user's CV:
+$_cvContext
+
+Use this CV information to provide personalized advice when relevant.
+''' : ''}
+'''),
+    ]);
+  }
+
+  void clearCVContext() {
+    _cvContext = null;
+    // Restart chat session without CV context
+    _chat = _model.startChat(history: [
+      Content.text('''
+You are a concise and focused AI career coach. Follow these guidelines:
+1. Keep responses short and actionable (2-3 paragraphs max)
+2. Focus on practical, specific advice
+3. Use bullet points for lists
+4. Avoid generic advice and corporate jargon
+5. When suggesting resources or next steps, limit to top 3 most relevant
+6. If you need more context, ask a specific follow-up question
+'''),
+    ]);
+  }
+
   AIService._internal() {
     _model = FirebaseAI.googleAI().generativeModel(model: 'gemini-2.0-flash');
-    _chat = _model.startChat();
+    _chat = _model.startChat(history: [
+      Content.text('''
+You are a concise and focused AI career coach. Follow these guidelines:
+1. Keep responses short and actionable (2-3 paragraphs max)
+2. Focus on practical, specific advice
+3. Use bullet points for lists
+4. Avoid generic advice and corporate jargon
+5. When suggesting resources or next steps, limit to top 3 most relevant
+6. If you need more context, ask a specific follow-up question
+'''),
+    ]);
   }
 
   Stream<String> streamMessage(String message) async* {
     try {
-      final response = await _chat.sendMessageStream(Content.text(message));
+      final response = _chat.sendMessageStream(Content.text(message));
       String buffer = '';
 
       await for (final chunk in response) {
@@ -45,292 +96,168 @@ class AIService {
     }
   }
 
-  Stream<Map<String, dynamic>> analyzeCVContentDetailedStream(
-      String cvContent) async* {
+  Future<Map<String, List<Map<String, dynamic>>>> analyzeCVContentDetailed(
+      String cvContent) async {
     try {
-      const basePrompt = '''
-You are an experienced technical recruiter specializing in software engineering roles. Provide a detailed, professional analysis of this CV.
+      print('Starting CV analysis...');
 
-For each section, format your response with clear headings and bullet points. Be specific and actionable in your feedback.
+      // Set CV context for future chat interactions
+      setCVContext(cvContent);
 
-Guidelines:
-- Focus on technical and professional growth opportunities
-- Highlight both strengths and areas for improvement
-- Provide concrete, actionable recommendations
-- Consider market trends and industry standards
-- Be direct but constructive in feedback
+      final prompt = '''
+You are a senior technical recruiter at a top-tier tech company in Berlin, specializing in hiring software engineers across international markets. 
+Berlin is one of Europe's most competitive and English-first tech hubs. You are known for giving sharp, honest, and practical feedback that helps candidates grow and succeed.
 
-Please analyze and respond in detail for each section.
-''';
+Your job is to assess the CV below and provide straightforward, constructive feedback — the kind you'd give if the candidate were sitting across the table from you.
 
-      // Initialize result map
-      Map<String, dynamic> result = {
-        'summary': [],
-        'content': [],
-        'seniority': [],
-        'structure': [],
-        'improvements': [],
-        'salary': [],
-      };
+--- 
 
-      // Summary Assessment
-      final summaryPrompt = '''$basePrompt
-Provide a comprehensive overview of the candidate's profile:
+🔹 Feedback Types – choose carefully for each item:
+- "success" → For anything positive or advantageous:
+  • Strong achievements  
+  • Clear formatting or layout  
+  • Relevant skills or standout experience  
+  • Signs of high potential  
+  • Competitive market value  
+- "warning" → For serious concerns or red flags (e.g., major gaps, unclear job history)
+- "improvement" → For anything that's currently weak or underdeveloped, but fixable
+- "suggestion" → For optional ideas that could elevate the CV further
+- "info" → Use only for neutral facts with no evaluation (e.g., job title, last role, years worked)
 
-1. Current Position & Level
-   - Current role and responsibilities
-   - Seniority assessment
-   - Industry focus
+📌 Return a valid JSON matching the exact structure below – with no extra commentary, markdown, or code fences.
 
-2. Core Technical Competencies
-   - Primary technical skills
-   - Technical specializations
-   - Tool proficiency
+{
+  "position": [
+    { "title": "Current Role", "description": "Current or last position", "type": "info" },
+    { "title": "Level", "description": "Seniority level assessment", "type": "info" }
+  ],
+  "summary": [
+    { "title": "First Impression", "description": "Your immediate reaction to the CV — highlight what stands out most. If the first impression is even slightly positive, mark this as type: success", "type": "success" },
+    { "title": "CV Strengths", "description": "What makes the document effective (clarity, formatting, structure)?", "type": "success" },
+    { "title": "Candidate Strengths", "description": "What technical or professional strengths are clearly visible?", "type": "success" },
+    { "title": "Main Concerns", "description": "What are the top issues that could prevent this candidate from progressing?", "type": "warning" }
+  ],
+  "structure": [
+    { "title": "Document Format", "description": "Evaluate clarity, spacing, fonts, and overall layout", "type": "success" },
+    { "title": "Information Flow", "description": "How well is the story of the career progression told?", "type": "success" },
+    { "title": "Visual Appeal", "description": "Is the document visually readable, modern, and professional?", "type": "success" }
+  ],
+  "improvements": [
+    { "title": "Quick Wins", "description": "Low-effort changes with high impact (e.g., rewording bullets, restructuring sections)", "type": "improvement" },
+    { "title": "Missing Elements", "description": "What critical sections or details are absent?", "type": "warning" },
+    { "title": "Presentation Tips", "description": "How could the candidate make their results or impact pop more?", "type": "suggestion" }
+  ],
+  "salary": [
+    { "title": "Market Range", "description": "Estimate a fair Berlin-based salary range for this candidate based on their profile and experience", "type": "success" },
+    { "title": "Negotiation Points", "description": "What strengths can the candidate leverage in salary or role negotiations?", "type": "success" }
+  ]
+}
 
-3. Professional Capabilities
-   - Leadership experience
-   - Project management skills
-   - Team collaboration
+---
 
-4. Overall Assessment
-   - Key strengths
-   - Notable achievements
-   - Career trajectory
+🔍 Style Guidelines  
+1. Feedback must be direct and specific — no fluff, no generic compliments  
+2. Use concrete examples whenever suggesting changes  
+3. Show real understanding of Berlin tech job market trends  
+4. Keep the tone professional, honest, and helpful — not robotic or vague  
+5. No corporate buzzwords. No passive phrasing. Be human.  
+6. Use bullet points (•) where helpful — not asterisks or hyphens  
+7. Avoid repeating the same feedback across multiple sections  
+8. Assume the candidate is international and English-speaking (German not required)  
+9. If something is a strength, always mark as "success" — never hide it  
+10. Respond ONLY in valid JSON. Nothing else.
 
 CV Content:
 $cvContent
 ''';
 
-      final summaryStream =
-          _model.generateContentStream([Content.text(summaryPrompt)]);
-      await for (final chunk in summaryStream) {
-        if (chunk.text != null) {
-          result['summary'] = _parseFeedbackSection(chunk.text!);
-          yield result;
-        }
+      print('Sending request to AI...');
+      final response = await _model.generateContent([Content.text(prompt)]);
+
+      if (response.text == null) {
+        return _createFallbackResponse(
+            'Sorry, we couldn\'t analyze your CV at the moment. Please try again in a few minutes.');
       }
 
-      // Content Quality
-      final contentPrompt = '''$basePrompt
-Analyze the quality and impact of the experience section:
+      try {
+        print('Parsing response...');
+        final responseText = response.text!
+            .trim()
+            .replaceAll(RegExp(r'^```json\s*'), '')
+            .replaceAll(RegExp(r'\s*```$'), '')
+            .trim();
 
-1. Technical Projects
-   - Complexity and scope
-   - Technologies utilized
-   - Problem-solving approaches
+        final Map<String, dynamic> jsonResponse = json.decode(responseText);
+        print('Response parsed successfully');
 
-2. Professional Impact
-   - Quantifiable achievements
-   - Project outcomes
-   - Team contributions
+        final result = {
+          'summary': _convertToList(jsonResponse['summary']),
+          'structure': _convertToList(jsonResponse['structure']),
+          'improvements': _convertToList(jsonResponse['improvements']),
+          'salary': _convertToList(jsonResponse['salary']),
+        };
 
-3. Technical Growth
-   - Skill progression
-   - Learning trajectory
-   - Technical challenges tackled
-
-CV Content:
-$cvContent
-''';
-
-      final contentStream =
-          _model.generateContentStream([Content.text(contentPrompt)]);
-      await for (final chunk in contentStream) {
-        if (chunk.text != null) {
-          result['content'] = _parseFeedbackSection(chunk.text!);
-          yield result;
+        if (result.values.every((list) => list.isEmpty)) {
+          return _createFallbackResponse(
+            'We analyzed your CV but couldn\'t generate detailed feedback. '
+            'Please try uploading a different version of your CV.',
+          );
         }
-      }
 
-      // Seniority Assessment
-      final seniorityPrompt = '''$basePrompt
-Evaluate career level and progression:
-
-1. Current Level Assessment
-   - Technical seniority
-   - Leadership capability
-   - Domain expertise
-
-2. Career Progression
-   - Growth trajectory
-   - Role transitions
-   - Skill advancement
-
-3. Next Career Steps
-   - Potential roles
-   - Required capabilities
-   - Growth opportunities
-
-CV Content:
-$cvContent
-''';
-
-      final seniorityStream =
-          _model.generateContentStream([Content.text(seniorityPrompt)]);
-      await for (final chunk in seniorityStream) {
-        if (chunk.text != null) {
-          result['seniority'] = _parseFeedbackSection(chunk.text!);
-          yield result;
-        }
-      }
-
-      // Structure Analysis
-      final structurePrompt = '''$basePrompt
-Review CV structure and presentation:
-
-1. Document Organization
-   - Section flow
-   - Information hierarchy
-   - Content completeness
-
-2. Technical Presentation
-   - Skills presentation
-   - Project descriptions
-   - Technical achievements
-
-3. Professional Format
-   - Layout effectiveness
-   - Readability
-   - Professional standards
-
-CV Content:
-$cvContent
-''';
-
-      final structureStream =
-          _model.generateContentStream([Content.text(structurePrompt)]);
-      await for (final chunk in structureStream) {
-        if (chunk.text != null) {
-          result['structure'] = _parseFeedbackSection(chunk.text!);
-          yield result;
-        }
-      }
-
-      // Improvement Suggestions
-      final improvementPrompt = '''$basePrompt
-Provide specific improvement recommendations:
-
-1. Technical Enhancements
-   - Skill gaps to address
-   - Technical certifications
-   - Learning priorities
-
-2. Professional Development
-   - Leadership opportunities
-   - Industry involvement
-   - Career positioning
-
-3. CV Optimization
-   - Content improvements
-   - Format refinements
-   - Impact enhancement
-
-Provide specific, actionable steps for each area.
-
-CV Content:
-$cvContent
-''';
-
-      final improvementStream =
-          _model.generateContentStream([Content.text(improvementPrompt)]);
-      await for (final chunk in improvementStream) {
-        if (chunk.text != null) {
-          result['improvements'] = _parseFeedbackSection(chunk.text!);
-          yield result;
-        }
-      }
-
-      // Market Position
-      final salaryPrompt = '''$basePrompt
-As a senior technical recruitment consultant specializing in Berlin's tech market for 20+ years, I'll provide a detailed compensation analysis for your QA/Development profile.
-
-• Role Level: Analyze current position and market alignment
-  - Assess current role classification
-  - Review years of relevant QA/Dev experience
-  - Evaluate technical leadership scope
-
-• Current Market Range (Berlin, Gross Annual)
-  - Junior QA Automation: €45,000 - €65,000
-  - Mid-Level QA Automation: €60,000 - €85,000
-  - Senior QA Automation: €75,000 - €95,000
-  - Lead QA Automation: €85,000 - €120,000
-
-• Premium Value Factors
-  - Cloud automation expertise: +10-15%
-  - Test framework architecture: +5-10%
-  - CI/CD pipeline mastery: +5-10%
-  - German language skills: +5-15%
-
-• Growth Potential
-  - Next role target range
-  - Key certifications impact
-  - Leadership track premium
-  - Timeline to next level
-
-• Market Insights
-  - Current Berlin tech demand
-  - Industry sector premiums
-  - Remote work impact
-  - Q1 2024 trends
-
-Note: All figures represent base salary in EUR, excluding benefits, bonus, and equity components. Data based on active Berlin tech market placements in Q1 2024.
-
-CV Content:
-$cvContent
-''';
-
-      final salaryStream =
-          _model.generateContentStream([Content.text(salaryPrompt)]);
-      await for (final chunk in salaryStream) {
-        if (chunk.text != null) {
-          result['salary'] = _parseFeedbackSection(chunk.text!);
-          yield result;
-        }
+        return result;
+      } catch (e) {
+        print('JSON parsing error: $e');
+        return _createFallbackResponse(
+          'We had trouble processing the CV analysis. '
+          'Please try again, and if the problem persists, try uploading a different version of your CV.',
+        );
       }
     } catch (e) {
-      yield {
-        'error': 'Error analyzing CV: $e',
-      };
+      print('Error in CV analysis: $e');
+      return _createFallbackResponse(
+        'We encountered an issue while analyzing your CV. '
+        'Please try again in a few moments.',
+      );
     }
   }
 
-  List<Map<String, dynamic>> _parseFeedbackSection(String feedback) {
-    final List<Map<String, dynamic>> feedbackList = [];
-
-    // Clean up the text first
-    feedback = feedback.replaceAll('**', '').replaceAll('*', '').trim();
-
-    // Split into sections by numbers or bullet points
-    final sections = feedback.split(RegExp(r'\n(?=\d+\.|[-•])'));
-
-    for (var section in sections) {
-      if (section.trim().isEmpty) continue;
-
-      // Parse section title and content
-      var match = RegExp(r'^(?:\d+\.|[-•])\s*([^:]+):\s*(.+)$', dotAll: true)
-          .firstMatch(section.trim());
-
-      if (match != null) {
-        feedbackList.add({
-          'type': _determineFeedbackType(match.group(2)!),
-          'title': match.group(1)!.trim(),
-          'description': match.group(2)!.trim(),
-        });
-      } else {
-        // Handle bullet points without explicit titles
-        var cleanSection =
-            section.replaceAll(RegExp(r'^[-•\d.]\s*'), '').trim();
-        if (cleanSection.isNotEmpty) {
-          feedbackList.add({
-            'type': _determineFeedbackType(cleanSection),
-            'title': '',
-            'description': cleanSection,
-          });
+  Map<String, List<Map<String, dynamic>>> _createFallbackResponse(
+      String message) {
+    return {
+      'summary': [
+        {
+          'type': 'info',
+          'title': 'Analysis Status',
+          'description': message,
         }
-      }
-    }
+      ],
+      'improvements': [
+        {
+          'type': 'suggestion',
+          'title': 'Suggestions',
+          'description':
+              'Make sure your CV is in a standard format and contains extractable text. '
+                  'If you\'re using a PDF, ensure it\'s not scanned or image-based.',
+        }
+      ],
+    };
+  }
 
-    return feedbackList;
+  List<Map<String, dynamic>> _convertToList(dynamic section) {
+    if (section == null) return [];
+    if (section is! List) return [];
+
+    return section.map((item) {
+      if (item is! Map) {
+        return {'title': '', 'description': item.toString(), 'type': 'info'};
+      }
+
+      return {
+        'title': item['title'] ?? '',
+        'description': item['description'] ?? '',
+        'type': _determineFeedbackType(item['description'] ?? ''),
+      };
+    }).toList();
   }
 
   String _determineFeedbackType(String text) {
@@ -352,7 +279,7 @@ $cvContent
         lowerText.contains('excellent') ||
         lowerText.contains('good') ||
         lowerText.contains('well')) {
-      return 'strength';
+      return 'success';
     }
 
     return 'info';

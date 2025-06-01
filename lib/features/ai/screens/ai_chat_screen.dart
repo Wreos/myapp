@@ -18,6 +18,33 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
   final _scrollController = ScrollController();
   bool _isComposing = false;
 
+  final List<Map<String, dynamic>> _quickPrompts = [
+    {
+      'icon': Icons.work_outline,
+      'title': 'Career Path',
+      'prompt':
+          'What career paths are suitable for someone interested in technology and innovation?'
+    },
+    {
+      'icon': Icons.school_outlined,
+      'title': 'Skills',
+      'prompt':
+          'What skills should I develop to become a successful software developer?'
+    },
+    {
+      'icon': Icons.trending_up,
+      'title': 'Growth',
+      'prompt':
+          'How can I advance in my current career and take it to the next level?'
+    },
+    {
+      'icon': Icons.psychology_outlined,
+      'title': 'Interview',
+      'prompt':
+          'What are the most common interview questions for tech positions and how should I prepare?'
+    },
+  ];
+
   @override
   void dispose() {
     _messageController.dispose();
@@ -34,6 +61,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     );
   }
 
+  void _sendQuickPrompt(String prompt) {
+    _messageController.text = prompt;
+    _sendMessage();
+  }
+
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
@@ -44,7 +76,6 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
     ref.read(chatProvider.notifier).streamMessage(userId, message).listen(
       (_) {
-        // Scroll to bottom after each chunk
         Future.delayed(
           const Duration(milliseconds: 50),
           _scrollToBottom,
@@ -71,23 +102,16 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI Career Coach'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              ref.read(chatProvider.notifier).clearChat();
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
           Expanded(
             child: messages.isEmpty
-                ? Center(
+                ? SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        SizedBox(height: Sizes.paddingXXL),
                         Icon(
                           Icons.chat_bubble_outline,
                           size: 64,
@@ -99,6 +123,65 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                           style: TextStyle(
                             color: colorScheme.onSurface.withOpacity(0.7),
                           ),
+                        ),
+                        SizedBox(height: Sizes.paddingXL),
+                        Padding(
+                          padding: EdgeInsets.all(Sizes.paddingL),
+                          child: Text(
+                            'Popular Questions',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.all(Sizes.paddingL),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 1.3,
+                          ),
+                          itemCount: _quickPrompts.length,
+                          itemBuilder: (context, index) {
+                            final prompt = _quickPrompts[index];
+                            return Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(
+                                  color: colorScheme.outline.withOpacity(0.2),
+                                ),
+                              ),
+                              child: InkWell(
+                                onTap: () => _sendQuickPrompt(prompt['prompt']),
+                                borderRadius: BorderRadius.circular(16),
+                                child: Padding(
+                                  padding: EdgeInsets.all(Sizes.paddingM),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        prompt['icon'],
+                                        size: 32,
+                                        color: colorScheme.primary,
+                                      ),
+                                      SizedBox(height: Sizes.paddingS),
+                                      Text(
+                                        prompt['title'],
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -162,7 +245,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: colorScheme.surfaceVariant,
+                          fillColor: colorScheme.surfaceContainerHighest,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 10,
@@ -181,7 +264,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                       decoration: BoxDecoration(
                         color: _isComposing
                             ? colorScheme.primary
-                            : colorScheme.surfaceVariant,
+                            : colorScheme.surfaceContainerHighest,
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(

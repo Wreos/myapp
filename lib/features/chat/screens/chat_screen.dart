@@ -92,7 +92,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               padding: EdgeInsets.all(Sizes.paddingM),
               decoration: BoxDecoration(
                 color:
-                    isUser ? colorScheme.primary : colorScheme.surfaceVariant,
+                    isUser ? colorScheme.primary : colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(Sizes.radiusM),
               ),
               child: Column(
@@ -210,7 +210,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: colorScheme.surfaceVariant,
+                        fillColor: colorScheme.surfaceContainerHighest,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 10,
@@ -227,7 +227,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     decoration: BoxDecoration(
                       color: _isComposing
                           ? colorScheme.primary
-                          : colorScheme.surfaceVariant,
+                          : colorScheme.surfaceContainerHighest,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(

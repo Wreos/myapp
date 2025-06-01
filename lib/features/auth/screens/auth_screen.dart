@@ -7,7 +7,6 @@ import 'package:crypto/crypto.dart';
 import 'dart:math';
 import 'package:next_you/constants/sizes.dart';
 import 'package:next_you/features/auth/screens/email_auth_screen.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:io';
 
 class AuthScreen extends StatefulWidget {
@@ -154,10 +153,11 @@ class _AuthScreenState extends State<AuthScreen>
                       SizedBox(height: Sizes.paddingXXXL),
                       if (_isLoading)
                         Container(
-                          padding: EdgeInsets.all(Sizes.paddingL),
+                          width: Sizes.buttonMinWidth,
+                          height: Sizes.buttonHeight,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(Sizes.radiusM),
+                            borderRadius: BorderRadius.circular(Sizes.radiusL),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.1),
@@ -166,9 +166,11 @@ class _AuthScreenState extends State<AuthScreen>
                               ),
                             ],
                           ),
-                          child: const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           ),
                         )
@@ -203,9 +205,10 @@ class _AuthScreenState extends State<AuthScreen>
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.asset(
-                                    'assets/images/google_logo.png',
-                                    height: 24,
+                                  Icon(
+                                    Icons.g_mobiledata_rounded,
+                                    size: Sizes.iconXL,
+                                    color: Colors.white,
                                   ),
                                   const SizedBox(width: Sizes.paddingM),
                                   const Text(

@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 
 enum MessageType { text, suggestion, weeklyCheckIn, goalUpdate }
 

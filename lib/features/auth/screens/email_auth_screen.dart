@@ -54,13 +54,18 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
           password: _passwordController.text,
         );
       }
+
+      // After successful auth, let AuthWrapper handle navigation
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     } finally {
