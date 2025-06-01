@@ -1,98 +1,94 @@
 import 'package:flutter/material.dart';
-import 'package:next_you/features/cv/screens/cv_screen.dart';
-import 'package:next_you/features/ai/screens/ai_chat_screen.dart';
+import 'package:next_you/features/chat/screens/chat_screen.dart';
+import 'package:next_you/features/cv/screens/cv_upload_screen.dart';
 import 'package:next_you/features/more/screens/more_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:next_you/features/cv/models/cv_feedback_model.dart';
+import 'package:next_you/features/cv/screens/cv_feedback_view.dart';
+import 'dart:convert';
+import 'package:go_router/go_router.dart';
 
-class MainScreen extends ConsumerStatefulWidget {
-  const MainScreen({super.key});
+final selectedTabProvider = StateProvider<int>((ref) => 0);
+
+class MainScreen extends ConsumerWidget {
+  final Widget child;
+
+  const MainScreen({
+    super.key,
+    required this.child,
+  });
 
   @override
-  ConsumerState<MainScreen> createState() => _MainScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final location = GoRouterState.of(context).matchedLocation;
 
-class _MainScreenState extends ConsumerState<MainScreen> {
-  int _selectedIndex = 0;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeScreen();
-  }
-
-  Future<void> _initializeScreen() async {
-    // Ensure the widget is mounted before updating state
-    if (!mounted) return;
-
-    // Add a small delay to ensure everything is properly initialized
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  static const List<Widget> _screens = [
-    CVScreen(),
-    AIChatScreen(),
-    MoreScreen(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  Future<void> _signOut() async {
-    try {
-      await FirebaseAuth.instance.signOut();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error signing out: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+    int _getSelectedIndex(String location) {
+      switch (location) {
+        case '/':
+          return 0;
+        case '/chat':
+          return 1;
+        case '/more':
+          return 2;
+        default:
+          return 0;
       }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
     }
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: child,
       bottomNavigationBar: NavigationBar(
-        onDestinationSelected: _onItemTapped,
-        selectedIndex: _selectedIndex,
-        destinations: const [
+        selectedIndex: _getSelectedIndex(location),
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 0:
+              context.go('/');
+              break;
+            case 1:
+              context.go('/chat');
+              break;
+            case 2:
+              context.go('/more');
+              break;
+          }
+        },
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        height: 60,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.description_outlined),
-            selectedIcon: Icon(Icons.description),
+            icon: Icon(
+              Icons.description_outlined,
+              color: _getSelectedIndex(location) == 0
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
             label: 'CV Analysis',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_outlined),
-            selectedIcon: Icon(Icons.chat),
+            icon: Icon(
+              Icons.chat_outlined,
+              color: _getSelectedIndex(location) == 1
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
             label: 'Career Coach',
           ),
           NavigationDestination(
-            icon: Icon(Icons.more_horiz_outlined),
-            selectedIcon: Icon(Icons.more_horiz),
+            icon: Icon(
+              Icons.more_horiz,
+              color: _getSelectedIndex(location) == 2
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
             label: 'More',
           ),
         ],

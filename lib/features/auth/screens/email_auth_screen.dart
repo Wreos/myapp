@@ -3,7 +3,12 @@ import 'package:next_you/constants/sizes.dart';
 import 'package:next_you/features/auth/services/auth_service.dart';
 
 class EmailAuthScreen extends StatefulWidget {
-  const EmailAuthScreen({super.key});
+  final Future<void> Function() onAuthSuccess;
+
+  const EmailAuthScreen({
+    super.key,
+    required this.onAuthSuccess,
+  });
 
   @override
   State<EmailAuthScreen> createState() => _EmailAuthScreenState();
@@ -16,6 +21,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   final _authService = AuthService();
   bool _isLoading = false;
   bool _isSignUp = false;
+  bool _obscurePassword = true;
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
@@ -31,7 +37,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
     if (value == null || value.isEmpty) {
       return 'Please enter your password';
     }
-    if (value.length < 6) {
+    if (_isSignUp && value.length < 6) {
       return 'Password must be at least 6 characters';
     }
     return null;
@@ -55,9 +61,8 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
         );
       }
 
-      // After successful auth, let AuthWrapper handle navigation
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        await widget.onAuthSuccess();
       }
     } catch (e) {
       if (mounted) {
@@ -65,6 +70,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
           SnackBar(
             content: Text(e.toString()),
             backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -84,62 +90,147 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+        title: Text(_isSignUp ? 'Create Account' : 'Welcome Back'),
+        centerTitle: true,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(Sizes.paddingXL),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Enter your email',
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: _validateEmail,
-                enabled: !_isLoading,
+      body: CustomScrollView(
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: const EdgeInsets.all(Sizes.paddingXL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isSignUp ? Icons.person_add : Icons.person,
+                      size: 32,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    _isSignUp ? 'Join NextU' : 'Sign In',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isSignUp
+                        ? 'Create an account to get started'
+                        : 'Welcome back to NextU',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'Enter your email',
+                            prefixIcon: Icon(Icons.email_outlined,
+                                color: colorScheme.onSurfaceVariant),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: _validateEmail,
+                          enabled: !_isLoading,
+                          textInputAction: TextInputAction.next,
+                        ),
+                        const SizedBox(height: Sizes.paddingL),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            hintText: 'Enter your password',
+                            prefixIcon: Icon(Icons.lock_outline,
+                                color: colorScheme.onSurfaceVariant),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          obscureText: _obscurePassword,
+                          validator: _validatePassword,
+                          enabled: !_isLoading,
+                          onFieldSubmitted: (_) => _submitForm(),
+                        ),
+                        const SizedBox(height: Sizes.paddingXL),
+                        FilledButton(
+                          onPressed: _isLoading ? null : _submitForm,
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(
+                                  _isSignUp ? 'Create Account' : 'Sign In',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => setState(() => _isSignUp = !_isSignUp),
+                    child: Text(
+                      _isSignUp
+                          ? 'Already have an account? Sign In'
+                          : 'Don\'t have an account? Sign Up',
+                      style: TextStyle(color: colorScheme.primary),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: Sizes.paddingL),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Enter your password',
-                ),
-                obscureText: true,
-                validator: _validatePassword,
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: Sizes.paddingXL),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submitForm,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(_isSignUp ? 'Sign Up' : 'Sign In'),
-              ),
-              const SizedBox(height: Sizes.paddingL),
-              TextButton(
-                onPressed: _isLoading
-                    ? null
-                    : () => setState(() => _isSignUp = !_isSignUp),
-                child: Text(_isSignUp
-                    ? 'Already have an account? Sign In'
-                    : 'Don\'t have an account? Sign Up'),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

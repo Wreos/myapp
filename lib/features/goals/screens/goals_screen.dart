@@ -76,9 +76,35 @@ class GoalsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Career Goals'),
+        title: const Text(
+          'Career Goals',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? colorScheme.surface.withOpacity(0.95)
+            : colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: Theme.of(context).brightness == Brightness.dark ? 0 : 2,
+        shadowColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.transparent
+            : colorScheme.shadow.withOpacity(0.1),
+        toolbarHeight: kToolbarHeight + MediaQuery.of(context).padding.top,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? colorScheme.outline.withOpacity(0.2)
+                : Colors.transparent,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -88,37 +114,39 @@ class GoalsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: EdgeInsets.all(Sizes.paddingL),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildGoalCard(
-                  title: 'Learn Flutter Development',
-                  description:
-                      'Complete advanced Flutter course and build 3 portfolio projects',
-                  progress: 0.7,
-                  deadline: 'Mar 2024',
-                ),
-                _buildGoalCard(
-                  title: 'Get AWS Certification',
-                  description:
-                      'Study and pass the AWS Solutions Architect exam',
-                  progress: 0.3,
-                  deadline: 'Jun 2024',
-                ),
-                _buildGoalCard(
-                  title: 'Improve Leadership Skills',
-                  description:
-                      'Lead a team project and mentor junior developers',
-                  progress: 0.5,
-                  deadline: 'Dec 2024',
-                ),
-              ]),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.all(Sizes.paddingL),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildGoalCard(
+                    title: 'Learn Flutter Development',
+                    description:
+                        'Complete advanced Flutter course and build 3 portfolio projects',
+                    progress: 0.7,
+                    deadline: 'Mar 2024',
+                  ),
+                  _buildGoalCard(
+                    title: 'Get AWS Certification',
+                    description:
+                        'Study and pass the AWS Solutions Architect exam',
+                    progress: 0.3,
+                    deadline: 'Jun 2024',
+                  ),
+                  _buildGoalCard(
+                    title: 'Improve Leadership Skills',
+                    description:
+                        'Lead a team project and mentor junior developers',
+                    progress: 0.5,
+                    deadline: 'Dec 2024',
+                  ),
+                ]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

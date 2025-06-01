@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:next_you/auth_wrapper.dart';
+import 'package:next_you/features/navigation/screens/main_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:next_you/theme/app_theme.dart';
 import 'package:next_you/providers/theme_provider.dart';
+import 'features/navigation/router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
+    final router = ref.watch(routerProvider);
 
     // Configure status bar based on theme
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
@@ -32,12 +34,12 @@ class MyApp extends ConsumerWidget {
       statusBarBrightness: isDarkMode ? Brightness.dark : Brightness.light,
     ));
 
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'NextU - AI Career Coach',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: const AuthWrapper(),
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
   }

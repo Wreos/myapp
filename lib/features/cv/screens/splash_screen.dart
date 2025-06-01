@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:next_you/constants/sizes.dart';
-import 'package:next_you/screens/home_screen.dart';
+import 'package:next_you/features/navigation/screens/main_screen.dart';
 import 'package:next_you/features/cv/screens/app_icon.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen>
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
+              builder: (context) => const MainScreen(),
             ),
           );
         }

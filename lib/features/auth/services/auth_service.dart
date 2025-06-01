@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -47,7 +48,16 @@ class AuthService {
 
   // Sign out
   Future<void> signOut() async {
-    await _auth.signOut();
+    try {
+      // Clear CV analysis data
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('cv_analysis');
+
+      // Sign out from Firebase
+      await _auth.signOut();
+    } catch (e) {
+      throw 'Failed to sign out: $e';
+    }
   }
 
   // Get current user
@@ -55,4 +65,7 @@ class AuthService {
 
   // Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  // Check if user is signed in
+  bool get isSignedIn => currentUser != null;
 }

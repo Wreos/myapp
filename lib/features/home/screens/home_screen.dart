@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:next_you/constants/sizes.dart';
-import 'package:next_you/features/auth/screens/auth_screen.dart';
-import 'package:next_you/features/chat/screens/chat_screen.dart';
-import 'package:next_you/features/goals/screens/goals_screen.dart';
-import 'package:next_you/features/cv/screens/cv_screen.dart';
+import 'package:next_you/features/auth/screens/auth_modal.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,33 +26,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _handleFeaturePress(BuildContext context, Widget screen) {
+  void _handleFeaturePress(BuildContext context, String route) {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
+      context.go(route);
     } else {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Sign in Required'),
-          content: const Text('Please sign in to access this feature'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AuthScreen()),
-                );
-              },
-              child: const Text('Sign In'),
-            ),
-          ],
-        ),
+        builder: (context) => const AuthModal(),
       );
     }
   }
@@ -176,20 +155,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Career Chat',
                   description: 'Get personalized career guidance',
                   icon: Icons.chat_outlined,
-                  onTap: () => _handleFeaturePress(context, const ChatScreen()),
+                  onTap: () => _handleFeaturePress(context, '/chat'),
                 ),
                 _buildFeatureCard(
                   title: 'CV Review',
                   description: 'Get feedback on your resume',
                   icon: Icons.description_outlined,
-                  onTap: () => _handleFeaturePress(context, const CVScreen()),
+                  onTap: () => _handleFeaturePress(context, '/'),
                 ),
                 _buildFeatureCard(
                   title: 'Career Goals',
                   description: 'Track your professional goals',
                   icon: Icons.track_changes_outlined,
-                  onTap: () =>
-                      _handleFeaturePress(context, const GoalsScreen()),
+                  onTap: () => _handleFeaturePress(context, '/goals'),
                 ),
                 _buildFeatureCard(
                   title: 'Weekly Review',

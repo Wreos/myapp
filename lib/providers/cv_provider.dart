@@ -1,104 +1,81 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:next_you/services/ai_service.dart';
+import 'package:next_you/features/cv/models/cv_feedback_model.dart';
 
 class CVAnalysisState {
   final bool isAnalyzing;
-  final String? uploadedFile;
-  final String? cvContent;
-  final Map<String, List<Map<String, dynamic>>> feedback;
   final String? error;
+  final Map<String, dynamic>? feedback;
 
-  const CVAnalysisState({
+  CVAnalysisState({
     this.isAnalyzing = false,
-    this.uploadedFile,
-    this.cvContent,
-    this.feedback = const {},
     this.error,
+    this.feedback,
   });
 
   CVAnalysisState copyWith({
     bool? isAnalyzing,
-    String? uploadedFile,
-    String? cvContent,
-    Map<String, List<Map<String, dynamic>>>? feedback,
     String? error,
+    Map<String, dynamic>? feedback,
   }) {
     return CVAnalysisState(
       isAnalyzing: isAnalyzing ?? this.isAnalyzing,
-      uploadedFile: uploadedFile ?? this.uploadedFile,
-      cvContent: cvContent ?? this.cvContent,
+      error: error ?? this.error,
       feedback: feedback ?? this.feedback,
-      error: error,
     );
   }
 }
 
 class CVAnalysisNotifier extends StateNotifier<CVAnalysisState> {
-  final AIService _aiService;
+  final Ref ref;
 
-  CVAnalysisNotifier(this._aiService) : super(const CVAnalysisState());
+  CVAnalysisNotifier(this.ref) : super(CVAnalysisState());
 
-  void reset() {
-    state = const CVAnalysisState();
-  }
-
-  void setUploadedFile(String fileName, String content) {
-    state = state.copyWith(
-      uploadedFile: fileName,
-      cvContent: content,
-      error: null,
-    );
-  }
-
-  Future<void> analyzeCVContent() async {
-    if (state.cvContent == null) {
-      print('No CV content to analyze');
+  Future<void> analyzeCVContent(String content) async {
+    if (content.isEmpty) {
+      debugPrint('No CV content to analyze');
       return;
     }
 
-    print('Setting analyzing state...');
-    state = state.copyWith(isAnalyzing: true, feedback: const {}, error: null);
-
     try {
-      print('Calling AI service...');
-      final analysis =
-          await _aiService.analyzeCVContentDetailed(state.cvContent!);
-      print('Received analysis result');
+      debugPrint('Setting analyzing state...');
+      state = state.copyWith(isAnalyzing: true);
 
-      if (analysis.containsKey('error')) {
-        print('Analysis returned error');
-        if (mounted) {
-          state = state.copyWith(
-            error: analysis['error']?[0]['description'] ?? 'Unknown error',
-            isAnalyzing: false,
-          );
-        }
+      debugPrint('Calling AI service...');
+      final aiService = ref.read(aiServiceProvider);
+      final analysis = await aiService.analyzeCVContentDetailed(content);
+
+      debugPrint('Received analysis result');
+      if (analysis == null) {
+        debugPrint('Analysis returned error');
+        state = state.copyWith(
+          isAnalyzing: false,
+          error: 'Failed to analyze CV. Please try again.',
+        );
         return;
       }
 
-      if (mounted) {
-        print('Updating state with analysis...');
-        state = state.copyWith(
-          feedback: analysis,
-          isAnalyzing: false,
-          error: null,
-        );
-        print('State updated. Feedback sections: ${analysis.keys.join(', ')}');
-      }
+      debugPrint('Updating state with analysis...');
+      state = state.copyWith(
+        isAnalyzing: false,
+        feedback: analysis,
+        error: null,
+      );
+
+      debugPrint(
+          'State updated. Feedback sections: ${analysis.keys.join(', ')}');
     } catch (e) {
-      print('Error during analysis: $e');
-      if (mounted) {
-        state = state.copyWith(
-          error: 'Error analyzing CV: $e',
-          isAnalyzing: false,
-        );
-      }
+      debugPrint('Error during analysis: $e');
+      state = state.copyWith(
+        isAnalyzing: false,
+        error: e.toString(),
+      );
     }
   }
 }
 
 final cvAnalysisProvider =
     StateNotifierProvider<CVAnalysisNotifier, CVAnalysisState>((ref) {
-  final aiService = ref.watch(aiServiceProvider);
-  return CVAnalysisNotifier(aiService);
+  return CVAnalysisNotifier(ref);
 });

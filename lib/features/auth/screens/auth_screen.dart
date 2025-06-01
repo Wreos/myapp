@@ -8,9 +8,15 @@ import 'dart:math';
 import 'package:next_you/constants/sizes.dart';
 import 'package:next_you/features/auth/screens/email_auth_screen.dart';
 import 'dart:io';
+import 'package:go_router/go_router.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final bool isModal;
+
+  const AuthScreen({
+    super.key,
+    this.isModal = false,
+  });
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -69,10 +75,26 @@ class _AuthScreenState extends State<AuthScreen>
     return digest.toString();
   }
 
+  Future<void> _handleSuccessfulAuth() async {
+    if (!mounted) return;
+
+    // Delay navigation slightly to avoid navigator lock
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!mounted) return;
+
+    if (widget.isModal) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/');
+    }
+  }
+
   void _navigateToEmailAuth(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const EmailAuthScreen(),
+        builder: (context) => EmailAuthScreen(
+          onAuthSuccess: _handleSuccessfulAuth,
+        ),
       ),
     );
   }
@@ -80,6 +102,21 @@ class _AuthScreenState extends State<AuthScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: widget.isModal
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            )
+          : null,
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           Container(
@@ -93,6 +130,7 @@ class _AuthScreenState extends State<AuthScreen>
                   Theme.of(context).colorScheme.tertiary.withOpacity(0.4),
                 ],
               ),
+              borderRadius: widget.isModal ? BorderRadius.circular(16) : null,
             ),
           ),
           Positioned(
@@ -298,15 +336,11 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      // Check if we already have a user
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        if (mounted) Navigator.pop(context);
-        return;
-      }
+    if (_isLoading) return;
 
+    setState(() => _isLoading = true);
+
+    try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
         setState(() => _isLoading = false);
@@ -315,69 +349,22 @@ class _AuthScreenState extends State<AuthScreen>
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
+      final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-
-      // Optional: You can access additional user info
-      final user = userCredential.user;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-      }
-
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        String message = 'An error occurred during sign in';
-        switch (e.code) {
-          case 'account-exists-with-different-credential':
-            message = 'This account exists with different credentials';
-            break;
-          case 'invalid-credential':
-            message = 'Invalid credentials';
-            break;
-          case 'operation-not-allowed':
-            message = 'Google sign in is not enabled';
-            break;
-          case 'user-disabled':
-            message = 'This user account has been disabled';
-            break;
-          case 'user-not-found':
-            message = 'No user found for this email';
-            break;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red.withOpacity(0.8),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
+      await _auth.signInWithCredential(credential);
+      await _handleSuccessfulAuth();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to sign in with Google: $e'),
-            backgroundColor: Colors.red.withOpacity(0.8),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error signing in with Google: $e')),
+      );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -401,48 +388,20 @@ class _AuthScreenState extends State<AuthScreen>
       ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
 
       await _auth.signInWithCredential(oauthCredential);
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    } on SignInWithAppleAuthorizationException catch (e) {
-      String message;
-      switch (e.code) {
-        case AuthorizationErrorCode.canceled:
-          message = 'Sign in was cancelled';
-          break;
-        case AuthorizationErrorCode.failed:
-          message = 'Sign in failed: ${e.message}';
-          break;
-        case AuthorizationErrorCode.invalidResponse:
-          message = 'Invalid response while signing in';
-          break;
-        case AuthorizationErrorCode.notHandled:
-          message = 'Sign in not handled';
-          break;
-        default:
-          message = 'Sign in failed: Unknown error';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red.withOpacity(0.8),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+      await _handleSuccessfulAuth();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to sign in with Apple: $e'),
-          backgroundColor: Colors.red.withOpacity(0.8),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to sign in with Apple: $e'),
+            backgroundColor: Colors.red.withOpacity(0.8),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-        ),
-      );
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

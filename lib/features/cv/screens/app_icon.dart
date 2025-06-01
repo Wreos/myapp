@@ -14,6 +14,8 @@ class AppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return SizedBox(
       width: size,
       height: size,
@@ -30,7 +32,7 @@ class AppIcon extends StatelessWidget {
               padding: EdgeInsets.all(size * 0.15),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
+                  color: colorScheme.surface,
                   shape: BoxShape.circle,
                 ),
               ),

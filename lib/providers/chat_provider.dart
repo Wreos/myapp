@@ -15,7 +15,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
 
   ChatNotifier(this._aiService) : super([]);
 
-  Stream<void> streamMessage(String userId, String content) async* {
+  Future<void> sendMessage(String userId, String content) async {
     final messageId = _uuid.v4();
     final userMessage = ChatMessage(
       id: messageId,
@@ -39,7 +39,6 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       ];
 
       final aiMessageId = _uuid.v4();
-      var buffer = '';
 
       // Add initial AI message
       state = [
@@ -54,21 +53,20 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
         ),
       ];
 
-      await for (final chunk in _aiService.streamMessage(content)) {
-        buffer = chunk;
-        // Update AI message with new content
-        state = [
-          for (final msg in state)
-            if (msg.id == aiMessageId)
-              msg.copyWith(
-                content: buffer,
-                status: MessageStatus.sent,
-              )
-            else
-              msg
-        ];
-        yield buffer;
-      }
+      // Get AI response
+      final response = await _aiService.sendMessage(content);
+
+      // Update AI message with response
+      state = [
+        for (final msg in state)
+          if (msg.id == aiMessageId)
+            msg.copyWith(
+              content: response,
+              status: MessageStatus.sent,
+            )
+          else
+            msg
+      ];
     } catch (e) {
       state = [
         for (final msg in state)
@@ -80,8 +78,23 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     }
   }
 
+  void addMessage(ChatMessage message) {
+    state = [...state, message];
+  }
+
   void clearChat() {
     state = [];
+  }
+
+  void deleteMessage(int index) {
+    if (index >= 0 && index < state.length) {
+      final newState = List<ChatMessage>.from(state);
+      newState.removeAt(index);
+      state = newState;
+      if (state.isEmpty) {
+        clearChat();
+      }
+    }
   }
 
   void removeMessage(String messageId) {
@@ -96,6 +109,6 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     state = state.where((msg) => msg.id != messageId).toList();
 
     // Resend the message
-    streamMessage(message.userId, message.content);
+    sendMessage(message.userId, message.content);
   }
 }

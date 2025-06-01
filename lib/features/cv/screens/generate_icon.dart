@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart';
 import 'package:next_you/features/cv/screens/app_icon.dart';
 
 class GenerateIcon extends StatefulWidget {
@@ -29,10 +30,10 @@ class _GenerateIconState extends State<GenerateIcon> {
           await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData != null) {
         // Save the image data
-        print('Icon captured successfully!');
+        debugPrint('Icon captured successfully!');
       }
     } catch (e) {
-      print('Error capturing icon: $e');
+      debugPrint('Error capturing icon: $e');
     }
   }
 
