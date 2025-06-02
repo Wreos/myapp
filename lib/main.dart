@@ -7,10 +7,23 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:next_you/theme/app_theme.dart';
 import 'package:next_you/providers/theme_provider.dart';
 import 'features/navigation/router.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp();
+
+  // Pass all uncaught "fatal" errors to Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
 
   // Ensure Firebase is ready
   await Future.delayed(const Duration(milliseconds: 100));

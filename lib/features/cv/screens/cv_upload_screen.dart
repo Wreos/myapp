@@ -10,6 +10,7 @@ import 'package:next_you/services/ai_service.dart';
 import 'package:next_you/widgets/custom_app_bar.dart';
 import 'package:next_you/features/auth/services/auth_utils.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:docx_to_text/docx_to_text.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:typed_data';
 import 'dart:convert';
@@ -255,7 +256,22 @@ class _CVUploadScreenState extends ConsumerState<CVUploadScreen> {
         final PdfDocument document = PdfDocument(inputBytes: bytes);
         text = PdfTextExtractor(document).extractText();
         document.dispose();
+      } else if (extension == 'docx') {
+        text = await compute(docxToText, bytes);
+      } else if (extension == 'doc') {
+        // For older .doc files, we'll try to extract as plain text
+        // This is a fallback and may not work perfectly for all .doc files
+        List<Encoding> encodings = [utf8, latin1, ascii];
+        for (var encoding in encodings) {
+          try {
+            text = encoding.decode(bytes);
+            if (text.trim().isNotEmpty) break;
+          } catch (e) {
+            continue;
+          }
+        }
       } else {
+        // For txt files or other formats, try common encodings
         List<Encoding> encodings = [utf8, latin1, ascii];
         for (var encoding in encodings) {
           try {
@@ -268,13 +284,17 @@ class _CVUploadScreenState extends ConsumerState<CVUploadScreen> {
       }
 
       if (text.trim().isEmpty) {
-        throw Exception('No text could be extracted from the file');
+        throw Exception(
+            'No text could be extracted from the file. For DOC files, please save as DOCX format for better compatibility.');
       }
 
-      return text;
+      return text
+          .replaceAll(RegExp(r'[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
     } catch (e) {
-      debugPrint('Error extracting text: $e');
-      rethrow;
+      throw Exception(
+          'Could not extract text from the file. Please ensure it contains selectable text. For DOC files, please save as DOCX format for better compatibility.');
     }
   }
 

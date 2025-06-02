@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_you/services/user_data_service.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -147,6 +149,18 @@ class ProfileScreen extends ConsumerWidget {
                 foregroundColor: colorScheme.onErrorContainer,
               ),
             ),
+
+            // Test Crash Button (only in debug mode)
+            if (kDebugMode)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextButton(
+                  onPressed: () {
+                    FirebaseCrashlytics.instance.crash();
+                  },
+                  child: const Text('Test Crash'),
+                ),
+              ),
           ],
         ),
       ),

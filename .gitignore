@@ -29,6 +29,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+**/build/
+build/
 *.g.dart
 *.freezed.dart
 
@@ -42,6 +44,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+**/android/**/build/
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
 
 # Firebase configuration files
 google-services.json

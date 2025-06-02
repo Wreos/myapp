@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:next_you/features/cv/screens/cv_feedback_view.dart';
@@ -8,6 +9,7 @@ import 'package:next_you/services/ai_service.dart';
 import 'package:next_you/features/auth/services/auth_utils.dart';
 import 'package:next_you/features/cv/screens/cv_upload_screen.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:docx_to_text/docx_to_text.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:typed_data';
 import 'dart:convert';
@@ -48,7 +50,22 @@ class _CVUploadDialogState extends ConsumerState<CVUploadDialog> {
         final PdfDocument document = PdfDocument(inputBytes: bytes);
         text = PdfTextExtractor(document).extractText();
         document.dispose();
+      } else if (extension == 'docx') {
+        text = await compute(docxToText, bytes);
+      } else if (extension == 'doc') {
+        // For older .doc files, we'll try to extract as plain text
+        // This is a fallback and may not work perfectly for all .doc files
+        List<Encoding> encodings = [utf8, latin1, ascii];
+        for (var encoding in encodings) {
+          try {
+            text = encoding.decode(bytes);
+            if (text.trim().isNotEmpty) break;
+          } catch (e) {
+            continue;
+          }
+        }
       } else {
+        // For txt files or other formats, try common encodings
         List<Encoding> encodings = [utf8, latin1, ascii];
         for (var encoding in encodings) {
           try {
@@ -61,7 +78,8 @@ class _CVUploadDialogState extends ConsumerState<CVUploadDialog> {
       }
 
       if (text.trim().isEmpty) {
-        throw Exception('No text could be extracted from the file');
+        throw Exception(
+            'No text could be extracted from the file. For DOC files, please save as DOCX format for better compatibility.');
       }
 
       return text
@@ -70,7 +88,7 @@ class _CVUploadDialogState extends ConsumerState<CVUploadDialog> {
           .trim();
     } catch (e) {
       throw Exception(
-          'Could not extract text from the file. Please ensure it contains selectable text.');
+          'Could not extract text from the file. Please ensure it contains selectable text. For DOC files, please save as DOCX format for better compatibility.');
     }
   }
 
